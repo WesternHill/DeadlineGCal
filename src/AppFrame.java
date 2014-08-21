@@ -63,6 +63,7 @@ public class AppFrame{
 	static Timer periodic = null;
 	static Timer minTimer = null;
 	static HashMap<Integer,CalendarEvent> calEvents;
+	static PreferencePanel PrefPanel;
 	
 	//GUIコンポーネント
 	static JFrame mainFrame;
@@ -71,8 +72,8 @@ public class AppFrame{
 	static JLabel dateLabel;
 	static JLabel clkLabel;
 	static JScrollPane scrPane;
-	static JTextField addrField;
-	static JPasswordField passField;
+//	static JTextField addrField;
+//	static JPasswordField passField;
 //	static JComboBox<String> calBox;
 	static JButton getBtn;
 	static JTable tbl;
@@ -108,9 +109,9 @@ public class AppFrame{
 		clkLabel = new JLabel("Getting ready...");
 		clkLabel.setFont(new Font("Helvetica",Font.PLAIN,40));
 
-		//テキストフィールド
-		addrField = new JTextField(10);
-		passField = new JPasswordField(10);
+//		//テキストフィールド
+//		addrField = new JTextField(10);
+//		passField = new JPasswordField(10);
 		
 		//ボタン配置
 		getBtn = new JButton("Regist");
@@ -136,8 +137,8 @@ public class AppFrame{
 		topPane.add(clkLabel,BorderLayout.CENTER);
 		mainFrame.add(topPane,BorderLayout.NORTH);
 		//下部パネルの配置
-		paneBtm.add(addrField,BorderLayout.WEST);
-		paneBtm.add(passField,BorderLayout.WEST);
+//		paneBtm.add(addrField,BorderLayout.WEST);
+//		paneBtm.add(passField,BorderLayout.WEST);
 		paneBtm.add(getBtn,BorderLayout.CENTER);
 //		paneBtm.add(calBox,BorderLayout.EAST);
 		mainFrame.add(paneBtm,BorderLayout.SOUTH);
@@ -152,8 +153,11 @@ public class AppFrame{
 		scrPane.setBounds(0,CLKFIELD_H,mainFrame.getWidth(),mainFrame.getHeight()-CLKFIELD_H-BTMFIELD_H);//位置とサイズ（100,100の位置に640×480のフレーム
 		tbl.setBounds(scrPane.getBounds().x,scrPane.getBounds().y,scrPane.getWidth(),scrPane.getHeight());//位置とサイズ（100,100の位置に640×480のフレーム
 		
-		//Initialize calendar controller
-		Gcal = new gCal();
+		//Load and Initialize instances
+		PrefPanel = new PreferencePanel();
+		PreferencePanel.Preference pref = PrefPanel.readFromFile();
+		if(pref == null) pref = PrefPanel.pref;
+		Gcal = new gCal(pref.jsonPath,pref.servAddr);
 		
 		reflectClk();
 //		reflectGCal();
@@ -168,7 +172,6 @@ public class AppFrame{
 	}
  	
 	public static void reflectGCal(){
-		gCal Gcal = new gCal();
 		CalendarList list = Gcal.getCalendarList();
 		
 		String[] cals = null;
@@ -298,7 +301,7 @@ public class AppFrame{
 		public  void actionPerformed(ActionEvent e){
 			switch(e.getActionCommand()){
 			case "getBtn":
-				reflectGCal();
+				PrefPanel.showFrame();
 				break;
 			case "calBox":
 				reflectGCalEvent();
@@ -345,164 +348,12 @@ public class AppFrame{
 		}
 	}
 	
-	/*DEPRECATE METHOD*/
-//	public static class googleCal{
-//		public static final String url = "http://www.google.com/calendar/feeds/default/allcalendars/full";
-//		private static HttpTransport HTTP_TRANSPORT;
-//		private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
-//		private static final String REDIRECT_URL = "http://localhost:8080/google/callback";
-//		private static final String APP_NAME = "DeadlineGCal";
-//
-//		private static String name;
-//		private static String pass;
-//		
-//		googleCal(String name,String pass){
-//			this.name = name;
-//			this.pass = pass;
-//		}
-//		
-//		/**
-//		 * [DEPRICATED]Googleカレンダリストを取得する
-//		 * @param name：GoogleカレンダユーザID
-//		 * @param pass：Googleカレンダユーザパス
-//		 * @return Googleカレンダリスト
-//		 */
-//		public String[] getCalendars(){
-//			CalendarService gcalService = new CalendarService("GCal");
-//			try{
-//				gcalService.setUserCredentials(name,pass);
-//			}catch(Exception exc){
-//				System.out.println(exc.getMessage());
-//				System.out.println("ERR:Calendar Authentication Failed.");
-//				return null;
-//			}
-//			
-//			URL feedUrl;
-//			try {
-//				feedUrl = new URL(this.url);
-//				CalendarFeed resultFeed = gcalService.getFeed(feedUrl, CalendarFeed.class);
-//				String[] calendarList = new String[resultFeed.getEntries().size()];
-//				for(int i = 0;i < resultFeed.getEntries().size();i++){
-//					CalendarEntry entry = resultFeed.getEntries().get(i);
-//					calendarList[i] = entry.getTitle().getPlainText();
-//				}
-//				return calendarList;
-//			} catch (Exception exc) {
-//				return null;
-//			}
-//		}
-//
-//		//GoogleFlowに使う認証オブジェクトの取得
-//		public GoogleAuthorizationCodeFlow authenticate() throws GeneralSecurityException, IOException{
-//			HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-//			Set<String> scopes = new HashSet<String>();
-//			scopes.add("https://www.googleapis.com/auth/calendar");
-//			
-//			GoogleClientSecrets clientSecrets = getClientSecrets();
-//			GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, scopes).setAccessType("offline").setApprovalPrompt("force").build();
-//			
-//			return flow;
-//		}
-//		
-//		/*JSONファイル読み取り*/
-//		public GoogleClientSecrets getClientSecrets() throws IOException{
-//			Reader SECRET_FILE = new InputStreamReader(googleCal.class.getResourceAsStream("DeadlineGCal-1f348e8e73ff.json"));
-//			GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, SECRET_FILE);
-//			return clientSecrets;
-//		}
-//		
-//		/*GoogleOAuthURLの取得*/
-//		public String getGoogleOAuthURL() throws GeneralSecurityException, IOException{
-//			GoogleAuthorizationCodeFlow flow = authenticate();
-//			return flow.newAuthorizationUrl().setRedirectUri(REDIRECT_URL).build();
-//		}
-//		
-//		/*コールバック後のレスポンス取得*/
-//		public GoogleTokenResponse getGoogleResponse(String code) throws IOException, GeneralSecurityException{
-//			GoogleAuthorizationCodeFlow flow = authenticate();
-//			return flow.newTokenRequest(code).setRedirectUri(REDIRECT_URL).execute();
-//		}
-//		
-//		/**
-//		 * Get O-Authv2 helper for accessing protected resources
-//		 * @throws IOException 
-//		 * @throws GeneralSecurityException 
-//		 */
-//		public GoogleCredential getGoogleCredential(String addr,String pass) throws IOException, GeneralSecurityException{
-//			
-//			if(HTTP_TRANSPORT == null) HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-//			
-//			GoogleCredential credential = new GoogleCredential.Builder().setTransport(GoogleNetHttpTransport.newTrustedTransport())
-//	                													.setJsonFactory(new GsonFactory())
-//	                													.setServiceAccountId(addr)
-//	                													.setServiceAccountScopes(Arrays.asList("https://www.googleapis.com/auth/calendar.readonly"))
-//	                													.setServiceAccountPrivateKeyFromP12File(new File(pass+"-privatekey.p12"))
-//	                													.build();
-//				com.google.api.services.calendar.Calendar client = new com.google.api.services.calendar.Calendar.Builder(GoogleNetHttpTransport.newTrustedTransport(), new GsonFactory(), credential).build();
-//
-////			GoogleClientSecrets secrets = getClientSecrets();
-////			GoogleCredential credential = new GoogleCredential.Builder().setClientSecrets(secrets.getDetails().getClientId(),secrets.getDetails().getClientSecret()).setJsonFactory(JSON_FACTORY).setTransport(HTTP_TRANSPORT).build();
-////			credential.setRefreshToken(reflesh_token);
-////			credential.refreshToken();
-//			
-////			return credential;
-//		}
-//
-//
-//		
-//
-//		
-//		/**
-//		 * Using depricated version(v2)
-//		 * カレンダーイベントを取得
-//		 * @param name:ユーザ名
-//		 * @param pass:ユーザパスワード
-//		 * @return 取得したイベント列
-//		 */
-//		public HashMap<Integer,CalendarEvent> getCalendarEvent(String magicCookie){
-//			//認証
-//			CalendarService gcalService = new CalendarService("GCal");
-//			try{
-//				gcalService.setUserCredentials(name,pass);
-//				System.out.println("Calendar Authentication OK.");
-//			}catch(Exception exc){
-//				System.out.println("ERR: Calendar Authentication FAILED.");
-//				return null;
-//			}
-//			
-//			/*カレンダーイベントを取得*/
-//			URL feedAddr;
-//			CalendarEventFeed myfeed = null;
-//			try {
-//				feedAddr = new URL(String.format("https://www.google.com/calendar/feeds/2q8behv5m336rv8986ksdtldeg%%40group.calendar.google.com/private-4de036397b7e44493726e6b7d8aa9c5a/basic"));
-//				myfeed = gcalService.getFeed(feedAddr, CalendarEventFeed.class);
-//			} catch (Exception exc) {
-//				System.out.println("Getting calendar events FAILED.");
-//				exc.printStackTrace();
-//				return null;
-//			}
-//			
-//			/*結果を返り値に格納*/
-//			HashMap<Integer,CalendarEvent> events = new HashMap<Integer,CalendarEvent>();
-//			events.clear();
-//			int id_cnt = 0;
-//
-//			for(int i = 0;i < myfeed.getEntries().size();i++){
-//				  CalendarEventEntry entry = myfeed.getEntries().get(i);
-//				  String title = entry.getTitle().getPlainText();
-//				  DateTime time = null;
-//				  if(entry.getTimes().size() != 0) time= entry.getTimes().get(0).getStartTime();
-//				  else continue;
-//				  events.put((Integer)id_cnt,new CalendarEvent(id_cnt,title,time));
-//				  id_cnt++;
-//			}
-//			return events;
-//		}
-//	}//class googleCal
 	
 	public static class gCal{
 		private static HttpTransport HTTP_TRANSPORT;
 		private static final String APP_NAME = "DeadlineGCal";
+		private static String jsonPath;
+		private static String servAddr;
 
 		private static com.google.api.services.calendar.Calendar calService;
 		
@@ -511,8 +362,10 @@ public class AppFrame{
 		 * @param name
 		 * @param pass
 		 */
-		gCal(){
-		
+		gCal(String jsonPath,String servAddr){
+			this.jsonPath = jsonPath;
+			this.servAddr = servAddr;
+			
 			//get calendar client
 			GoogleCredential credit = null;
 			credit = getGoogleCredential();
@@ -526,8 +379,6 @@ public class AppFrame{
 		 * @throws GeneralSecurityException 
 		 */
 		public GoogleCredential getGoogleCredential(){
-			String jsonPath = "/Users/NishiokaTeturou/Dropbox/DeadlineGCal-5ffdecf38ca6.p12";
-			String servAddr = "410339112158-18h2rtkttrnst2oq3seohj4eiopha0pj@developer.gserviceaccount.com";
 			GoogleCredential credential = null;
 			try{
 				if(HTTP_TRANSPORT == null) HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
