@@ -6,6 +6,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
@@ -56,8 +58,7 @@ import com.google.gdata.data.codesearch.*;
 
 public class AppFrame{
 	private static final int rowNum = 3;
-	static final int CLKFIELD_H = 30;	//時刻フィールドの高さ
-	static final int BTMFIELD_H = 30;	//操作フィールドの高さ
+
 	
 	static gCal Gcal = null;
 	static Timer periodic = null;
@@ -67,15 +68,17 @@ public class AppFrame{
 	
 	//GUIコンポーネント
 	static JFrame mainFrame;
-	static JPanel paneBtm;
+	static JPanel bottomPane;
 	static JPanel topPane;
+	static JPanel prefPane;
 	static JLabel dateLabel;
 	static JLabel clkLabel;
+	static JLabel statusLabel;
 	static JScrollPane scrPane;
+	static JMenuBar menuBar;
 //	static JTextField addrField;
 //	static JPasswordField passField;
-//	static JComboBox<String> calBox;
-	static JButton getBtn;
+	static JLabel prefBtnLabel;
 	static JTable tbl;
 	static DefaultTableModel tableModel;
 	
@@ -100,67 +103,131 @@ public class AppFrame{
 		//フレーム挙動設定
  		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
  		mainFrame.addComponentListener(new mainFramePerformer());
+ 		GroupLayout gLayout = new GroupLayout(mainFrame.getContentPane());
+// 		mainFrame.setLayout(gLayout);
+ 		mainFrame.setBounds(10, 10, 480, 380);
+ 		mainFrame.addWindowListener(new WindowListener(){
+
+			@Override
+			public void windowOpened(WindowEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void windowClosing(WindowEvent e) {
+				// TODO Auto-generated method stub
+				PrefPanel.saveToFile();
+			}
+
+			@Override
+			public void windowClosed(WindowEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void windowIconified(WindowEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void windowDeiconified(WindowEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void windowActivated(WindowEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void windowDeactivated(WindowEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+ 			
+ 		});
+ 		
  		//パネル追加
  		topPane = new JPanel();
- 		topPane.setBackground(Color.white);
-		paneBtm = new JPanel();
+ 		topPane.setBackground(Color.blue);
+		bottomPane = new JPanel();
+		prefPane = new JPanel();
 		
 		//テキストラベル
 		clkLabel = new JLabel("Getting ready...");
 		clkLabel.setFont(new Font("Helvetica",Font.PLAIN,40));
-
-//		//テキストフィールド
-//		addrField = new JTextField(10);
-//		passField = new JPasswordField(10);
+		clkLabel.setBackground(Color.red);
 		
 		//ボタン配置
-		getBtn = new JButton("Regist");
-		getBtn.setActionCommand("getBtn");
-		getBtn.addActionListener(new mainFrameActionListener());
-		
-		//コンボボックス
-//		calBox = new JComboBox();
-//		calBox.setActionCommand("calBox");
-//		calBox.setSize(5, 3);
-//		calBox.setMinimumSize(new Dimension(4,3));
-//		calBox.setMaximumSize(new Dimension(10,3));
-//		calBox.addActionListener(new mainFrameActionListener());
+		prefBtnLabel = new JLabel(new ImageIcon("./img/Pref.png"));
+		prefBtnLabel.addMouseListener(new MouseListener(){
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				// TODO Auto-generated method stub
+				PrefPanel.showFrame();
+			}
 
+			@Override
+			public void mousePressed(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+		statusLabel = new JLabel("");//ボタン横ステータスラベル
+		
+		
 		//スクロールパネルとToDoリストテーブル作成
 		String[] columnNames = {"ToDo","Deadline","Daysleft"};
 		tableModel = new DefaultTableModel(columnNames,0);
 		tbl = new JTable(tableModel);
 		scrPane = new JScrollPane(tbl);
 		
+ 		adjustMainFrameLayout();
+
+		//Load preferences and Initialize instances
+		PrefPanel = new PreferencePanel();
+		PreferencePanel.Preference pref = PrefPanel.readFromFile();
+		if(pref == null) pref = PrefPanel.pref; // if pref-file couldn't be load.
+		Gcal = new gCal(pref.jsonPath,pref.servAddr);
+		mainFrame.setBounds(pref.appFrameBound);//Restore last window size
+		
 		/*各GUIパーツの設置*/
 		//上部パネルの配置
 		topPane.add(clkLabel,BorderLayout.CENTER);
 		mainFrame.add(topPane,BorderLayout.NORTH);
 		//下部パネルの配置
-//		paneBtm.add(addrField,BorderLayout.WEST);
-//		paneBtm.add(passField,BorderLayout.WEST);
-		paneBtm.add(getBtn,BorderLayout.CENTER);
-//		paneBtm.add(calBox,BorderLayout.EAST);
-		mainFrame.add(paneBtm,BorderLayout.SOUTH);
+		bottomPane.setLayout(new FlowLayout(FlowLayout.LEFT));
+		bottomPane.add(prefBtnLabel);
+		bottomPane.add(statusLabel);
+		mainFrame.add(bottomPane,BorderLayout.SOUTH);
 		//表本体の配置
 		mainFrame.add(scrPane,BorderLayout.CENTER);//パネルをフレームに載せる
 		mainFrame.setVisible(true);
 
-		//Adjust GUI parts
- 		mainFrame.setBounds(10, 10, 480, 380);
- 		topPane.setBounds(0,CLKFIELD_H,mainFrame.getWidth(),CLKFIELD_H);
- 		paneBtm.setBounds(0,mainFrame.getHeight()-BTMFIELD_H, mainFrame.getWidth(),BTMFIELD_H);
-		scrPane.setBounds(0,CLKFIELD_H,mainFrame.getWidth(),mainFrame.getHeight()-CLKFIELD_H-BTMFIELD_H);//位置とサイズ（100,100の位置に640×480のフレーム
-		tbl.setBounds(scrPane.getBounds().x,scrPane.getBounds().y,scrPane.getWidth(),scrPane.getHeight());//位置とサイズ（100,100の位置に640×480のフレーム
-		
-		//Load and Initialize instances
-		PrefPanel = new PreferencePanel();
-		PreferencePanel.Preference pref = PrefPanel.readFromFile();
-		if(pref == null) pref = PrefPanel.pref;
-		Gcal = new gCal(pref.jsonPath,pref.servAddr);
-		
 		reflectClk();
-//		reflectGCal();
 		reflectGCalEvent();
 		
 		//タイマースタート
@@ -170,6 +237,23 @@ public class AppFrame{
 		minTimer = new Timer();
 		minTimer.schedule(new CalRefleshTimer(),60-cal.get(Calendar.SECOND),1000*60);
 	}
+ 	
+ 	public static void adjustMainFrameLayout(){
+ 		final int CLKFIELD_H = 60;	//時刻フィールドの高さ
+ 		final int BTMFIELD_H = 20;	//操作フィールドの高さ
+ 		
+		//Adjust GUI parts
+ 		topPane.setBounds(0,CLKFIELD_H,mainFrame.getWidth(),CLKFIELD_H);
+		scrPane.setBounds(0,CLKFIELD_H,mainFrame.getWidth(),mainFrame.getHeight()-CLKFIELD_H-BTMFIELD_H);//位置とサイズ（100,100の位置に640×480のフレーム
+ 		bottomPane.setBounds(0,mainFrame.getHeight()-BTMFIELD_H, mainFrame.getWidth(),BTMFIELD_H);
+		tbl.setBounds(scrPane.getBounds().x,scrPane.getBounds().y,scrPane.getWidth(),scrPane.getHeight());//位置とサイズ（100,100の位置に640×480のフレーム
+ 		System.out.println(mainFrame.getBounds());
+ 		System.out.println(topPane.getBounds());
+ 		System.out.println(scrPane.getBounds());
+ 		System.out.println(bottomPane.getBounds());
+ 		System.out.println(clkLabel.getBounds());
+
+ 	}
  	
 	public static void reflectGCal(){
 		CalendarList list = Gcal.getCalendarList();
@@ -202,10 +286,10 @@ public class AppFrame{
 			if(event.getStart()!=null && event.getStart().getDateTime() != null){
 				long deadline = event.getStart().getDateTime().getValue();
 				String[] deadlineUnits = cvrtMilToString(leftMilSec(deadline));
-				leftTimeStr = String.format("%s %s日%s時間%s分", deadlineUnits[0],deadlineUnits[1],deadlineUnits[2],deadlineUnits[3]);
+				leftTimeStr = String.format("%s %2sd %sh %sm", deadlineUnits[0],deadlineUnits[1],deadlineUnits[2],deadlineUnits[3]);
 				Calendar cal = Calendar.getInstance();
 				cal.setTimeInMillis(deadline);
-				deadlineStr = String.format("%d-%d %d:%02d:%02d",cal.get(Calendar.MONTH)+1,cal.get(Calendar.DAY_OF_MONTH),cal.get(Calendar.HOUR_OF_DAY),cal.get(Calendar.MINUTE),cal.get(Calendar.SECOND));
+				deadlineStr = String.format("%d/%d %d:%02d",cal.get(Calendar.MONTH)+1,cal.get(Calendar.DAY_OF_MONTH),cal.get(Calendar.HOUR_OF_DAY),cal.get(Calendar.MINUTE),cal.get(Calendar.SECOND));
 			}
 			
 			Object[] todo = {event.getSummary(),deadlineStr,leftTimeStr};
@@ -222,19 +306,21 @@ public class AppFrame{
 			if(calEvents.get((Integer)i)!=null) deadline = calEvents.get((Integer)i).deadline;
 			else continue;
 			String[] deadlineUnits = cvrtMilToString(leftMilSec(deadline.getValue()));
-			String deadlineStr = String.format("%s %s日%s時間%s分", deadlineUnits[0],deadlineUnits[1],deadlineUnits[2],deadlineUnits[3]);
+			String deadlineStr = String.format("%s %2sd %sh %sm", deadlineUnits[0],deadlineUnits[1],deadlineUnits[2],deadlineUnits[3]);
 			tableModel.setValueAt(deadlineStr,i,2);
 		}
 	}
 	
 	public static void reflectClk(){
 		Calendar cal = Calendar.getInstance();
-		String clk = String.format("%d-%d %d:%02d:%02d",cal.get(Calendar.MONTH)+1,cal.get(Calendar.DAY_OF_MONTH),cal.get(Calendar.HOUR_OF_DAY),cal.get(Calendar.MINUTE),cal.get(Calendar.SECOND));
+		String clk = String.format("%d/%d %d:%02d:%02d",cal.get(Calendar.MONTH)+1,cal.get(Calendar.DAY_OF_MONTH),cal.get(Calendar.HOUR_OF_DAY),cal.get(Calendar.MINUTE),cal.get(Calendar.SECOND));
+
+		
 		if(6 < cal.get(Calendar.HOUR_OF_DAY) && cal.get(Calendar.HOUR_OF_DAY) < 18){
 			topPane.setBackground(Color.white);
 			clkLabel.setForeground(Color.black);
 		}else{
-			topPane.setBackground(Color.gray);
+			topPane.setBackground(new Color(0,0,64));
 			clkLabel.setForeground(Color.white);
 		}
 		clkLabel.setText(clk);
@@ -300,7 +386,7 @@ public class AppFrame{
 	public static class mainFrameActionListener implements ActionListener{
 		public  void actionPerformed(ActionEvent e){
 			switch(e.getActionCommand()){
-			case "getBtn":
+			case "prefBtnLabel":
 				PrefPanel.showFrame();
 				break;
 			case "calBox":
@@ -338,13 +424,13 @@ public class AppFrame{
 	public static class PeriodicTimer extends TimerTask{
 		public void run(){
 			reflectClk();
-			refleshLefttime();
 		}
 	}
 	
 	public static class CalRefleshTimer extends TimerTask{
 		public void run(){
 			reflectGCalEvent();
+			refleshLefttime();
 		}
 	}
 	
