@@ -228,14 +228,17 @@ public class AppFrame{
 		mainFrame.setVisible(true);
 
 		reflectClk();
-		reflectGCalEvent();
+//		reflectGCalEvent();
+		
+		System.out.println("Periodic event activated.");
 		
 		//タイマースタート
 		periodic = new Timer();
 		periodic.schedule(new PeriodicTimer(),0,1000);
 		Calendar cal = Calendar.getInstance();
+
 		minTimer = new Timer();
-		minTimer.schedule(new CalRefleshTimer(),60-cal.get(Calendar.SECOND),1000*60);
+		minTimer.schedule(new CalRefleshTimer(),(long)10%cal.get(Calendar.SECOND),(long)1000*10);
 	}
  	
  	public static void adjustMainFrameLayout(){
@@ -314,7 +317,6 @@ public class AppFrame{
 	public static void reflectClk(){
 		Calendar cal = Calendar.getInstance();
 		String clk = String.format("%d/%d %d:%02d:%02d",cal.get(Calendar.MONTH)+1,cal.get(Calendar.DAY_OF_MONTH),cal.get(Calendar.HOUR_OF_DAY),cal.get(Calendar.MINUTE),cal.get(Calendar.SECOND));
-
 		
 		if(6 < cal.get(Calendar.HOUR_OF_DAY) && cal.get(Calendar.HOUR_OF_DAY) < 18){
 			topPane.setBackground(Color.white);
@@ -504,9 +506,9 @@ public class AppFrame{
 			try {
 				calList = calService.calendarList().list().execute();
 				System.out.println(calList.getItems().toString());
-				System.out.println("CalList:"+calList.size());
+				System.out.println("Calendars:"+calList.size());
 				for(CalendarListEntry item : calList.getItems()){
-					System.out.println(item.getSummary());
+					System.out.println(" CalName:"+item.getSummary());
 				}
 			}catch (IOException e) {
 				e.printStackTrace();

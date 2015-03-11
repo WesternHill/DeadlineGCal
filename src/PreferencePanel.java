@@ -43,7 +43,7 @@ public class PreferencePanel implements Serializable{
 		if(pref==null){
 			System.out.println("Failed to read preferences");
 			pref = new Preference();
-			pref.jsonPath = "/Users/tetsurou/Dropbox/Accounts/DeadlineGCal-5ffdecf38ca6.p12";
+			pref.jsonPath = "/home/tetsurou/Dropbox/Accounts/DeadlineGCal-5ffdecf38ca6.p12";
 			pref.servAddr = "410339112158-18h2rtkttrnst2oq3seohj4eiopha0pj@developer.gserviceaccount.com";
 		}else{
 			System.out.println("Read preference");
@@ -193,7 +193,7 @@ public class PreferencePanel implements Serializable{
 		
 		/*Constructor (set initial value)*/
 		Preference(){
-			this.jsonPath = "/Users/tetsurou/Dropbox/Accounts/DeadlineGCal-5ffdecf38ca6.p12";
+			this.jsonPath = "/home/tetsurou/Dropbox/Accounts/DeadlineGCal-5ffdecf38ca6.p12";
 			this.servAddr = "410339112158-18h2rtkttrnst2oq3seohj4eiopha0pj@developer.gserviceaccount.com";
 			appFrameBound = new Rectangle(10, 10, 480, 380);
 		}
