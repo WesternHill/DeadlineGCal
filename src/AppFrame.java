@@ -260,6 +260,7 @@ public class AppFrame{
  	
 	public static void reflectGCal(){
 		CalendarList list = Gcal.getCalendarList();
+		if(list==null) return;
 		
 		String[] cals = null;
 		int calsIdx = 0;
@@ -317,6 +318,9 @@ public class AppFrame{
 	public static void reflectClk(){
 		Calendar cal = Calendar.getInstance();
 		String clk = String.format("%d/%d %d:%02d:%02d",cal.get(Calendar.MONTH)+1,cal.get(Calendar.DAY_OF_MONTH),cal.get(Calendar.HOUR_OF_DAY),cal.get(Calendar.MINUTE),cal.get(Calendar.SECOND));
+		if(cal.get(Calendar.SECOND)==0){
+			refleshLefttime();
+		}
 		
 		if(6 < cal.get(Calendar.HOUR_OF_DAY) && cal.get(Calendar.HOUR_OF_DAY) < 18){
 			topPane.setBackground(Color.white);
