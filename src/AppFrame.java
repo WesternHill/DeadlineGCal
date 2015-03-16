@@ -18,6 +18,8 @@ import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -201,7 +203,7 @@ public class AppFrame{
 		
 		//スクロールパネルとToDoリストテーブル作成
 		String[] columnNames = {"ToDo","Deadline","Daysleft"};
-		tableModel = new DefaultTableModel(columnNames,0);
+		tableModel = new ToDoTableModel(columnNames,0);
 		tbl = new JTable(tableModel);
 		scrPane = new JScrollPane(tbl);
 		
@@ -274,11 +276,15 @@ public class AppFrame{
 //		setItemToCBox(cals);
 	}
 	
+
+	
 	public static void reflectGCalEvent(){
 		if(Gcal == null) return;
 
 		CalendarList list = Gcal.getCalendarList();
+		if(list==null) return;
 		List<Event> events = Gcal.getEventList(list.getItems().get(1).getId());
+		Collections.sort(events,new EventComparator());
 		if(events==null) return;
 		removeAllToDo();
 
@@ -304,6 +310,7 @@ public class AppFrame{
 	/*CalendarEventから残り時間だけを狙って変更できるよう改良予定*/
 	public static void refleshLefttime(){
 		if(calEvents==null) return;
+
 		
 		for(int i = 0;i < tableModel.getRowCount();i++){
 			DateTime deadline;
@@ -570,5 +577,40 @@ public class AppFrame{
 			return this.id;
 		}
 	}
+}
+
+// Event comperator
+class EventComparator implements Comparator<Event>{
+	public int compare(Event arg0, Event arg1) {
+		if(arg0.getStart().getDateTime()==null || arg1.getStart().getDateTime()==null){
+			System.out.println("Argument events doesn't contain the start date information.");
+			return 0;// no date information( unable to compare)
+		}
+		
+    	if(arg0.getStart().getDateTime().getValue() > arg1.getStart().getDateTime().getValue()) return 1; //bigger
+    	else if(arg0.getStart().getDateTime().getValue() == arg1.getStart().getDateTime().getValue()) return 0; //equal
+    	else return -1;//smaller
+    }
+}
+
+class ToDoTableModel extends DefaultTableModel {
+    List<Color> rowColours = Arrays.asList(
+            Color.RED,
+            Color.GREEN,
+            Color.CYAN
+        );
+
+        public ToDoTableModel(String[] columnNames, int i) {
+		// TODO Auto-generated constructor stub
+	}
+
+		public void setRowColour(int row, Color c) {
+            rowColours.set(row, c);
+            fireTableRowsUpdated(row, row);
+        }
+
+        public Color getRowColour(int row) {
+            return rowColours.get(row);
+        }
 }
 
